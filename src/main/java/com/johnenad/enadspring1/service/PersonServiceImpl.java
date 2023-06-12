@@ -12,8 +12,12 @@ import java.util.Optional;
 @Service
 public class PersonServiceImpl implements PersonService {
 
+    final private PersonRepository personRepository;
+
     @Autowired
-    private PersonRepository personRepository;
+    public PersonServiceImpl(PersonRepository personRepository) {
+        this.personRepository = personRepository;
+    }
 
     @Override
     public List<PersonDTO> fetchAll() {
@@ -30,17 +34,13 @@ public class PersonServiceImpl implements PersonService {
     @Override
     public Optional<PersonDTO> getById(long id) {
         Optional<Person> personOpt = personRepository.findById(id);
-        if (personOpt.isPresent()) {
-            return Optional.of(PersonDTO.convert(personOpt.get()));
-        } else {
-            return Optional.empty();
-        }
+        return personOpt.map(PersonDTO::convert);
     }
 
     @Override
     public PersonDTO update(PersonDTO personDTO) {
         Optional<Person> p = personRepository.findById(personDTO.getId());
-        if (!p.isPresent()) {
+        if (p.isEmpty()) {
             return null;
         }
 
@@ -61,10 +61,8 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public void delete(long id) {
-        Optional<Person> todo = personRepository.findById(id);
-        if (todo.isPresent()) {
-            personRepository.delete(todo.get());
-        }
+        Optional<Person> person = personRepository.findById(id);
+        person.ifPresent(personRepository::delete);
     }
 
     @Override
