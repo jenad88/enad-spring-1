@@ -25,12 +25,10 @@ public class PersonController implements PersonApi {
         this.personService = personService;
     }
 
-    @GetMapping("")
     public ResponseEntity<PersonResponse> getAll() {
         try {
-            List<PersonDTO> persons = new ArrayList<>();
 
-            personService.fetchAll().forEach(persons::add);
+            List<PersonDTO> persons = new ArrayList<>(personService.fetchAll());
 
             if (persons.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -42,19 +40,14 @@ public class PersonController implements PersonApi {
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PersonResponse> getPersonById(@PathVariable("id") long id) {
+    public ResponseEntity<PersonResponse> getPersonById(long id) {
         Optional<PersonDTO> personOpt = personService.getById(id);
 
-        if (personOpt.isPresent()) {
-            return new ResponseEntity<>(PersonResponse.builder().data(personOpt.get()).build(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return personOpt.map(personDTO -> new ResponseEntity<>(PersonResponse.builder().data(personDTO).build(), HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PostMapping("")
-    public ResponseEntity<PersonResponse> createPerson(@RequestBody PersonDTO personDTO) {
+    public ResponseEntity<PersonResponse> createPerson(PersonDTO personDTO) {
         try {
             personDTO.setActive(true);
             PersonDTO newPerson = personService.save(personDTO);
@@ -64,8 +57,7 @@ public class PersonController implements PersonApi {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PersonResponse> updatePerson(@PathVariable("id") long id, @RequestBody PersonDTO personDTO) {
+    public ResponseEntity<PersonResponse> updatePerson(long id, PersonDTO personDTO) {
         personDTO.setId(id);
         PersonDTO updatedPersonDTO = personService.update(personDTO);
         if (updatedPersonDTO == null) {
@@ -76,8 +68,7 @@ public class PersonController implements PersonApi {
         return new ResponseEntity<>(personResponse, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deletePerson(@PathVariable("id") long id) {
+    public ResponseEntity<HttpStatus> deletePerson(long id) {
         try {
             personService.delete(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -86,7 +77,6 @@ public class PersonController implements PersonApi {
         }
     }
 
-    @GetMapping("/active")
     public ResponseEntity<PersonResponse> findByActive() {
         try {
             List<PersonDTO> persons = personService.fetchByActive(true);
